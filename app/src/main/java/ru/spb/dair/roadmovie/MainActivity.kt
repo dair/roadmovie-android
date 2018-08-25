@@ -36,6 +36,10 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
+        updateButtonText()
+    }
+
+    private fun updateButtonText() {
         if (isMyServiceRunning(MyService::class.java)) {
             _mainButton.text = "Остановить поездку"
         }
@@ -52,5 +56,7 @@ class MainActivity : AppCompatActivity() {
         else {
             stopService(intent)
         }
+
+        updateButtonText()
     }
 }
