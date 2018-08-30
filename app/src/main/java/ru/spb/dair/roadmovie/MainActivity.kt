@@ -13,16 +13,21 @@ import android.content.ComponentName
 import ru.spb.dair.roadmovie.MyService.LocalBinder
 import android.os.IBinder
 import android.content.ServiceConnection
+import android.content.pm.PackageManager
+import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
 import java.util.*
 import kotlin.concurrent.scheduleAtFixedRate
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback {
 
     lateinit var _mainButton: Button
     lateinit var _unloadLabel: TextView
+    lateinit var _speedLabel: TextView
 
     private var mBoundService: MyService? = null
     private var mShouldUnbind: Boolean = false
@@ -68,7 +73,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -80,6 +84,9 @@ class MainActivity : AppCompatActivity() {
 
         _unloadLabel = this.findViewById(R.id.unloadLabel)
         _unloadLabel.visibility = INVISIBLE
+
+        _speedLabel = this.findViewById(R.id.lastSpeed)
+        _speedLabel.text = ""
     }
 
     private fun isMyServiceRunning(serviceClass: Class<*>): Boolean {
@@ -95,6 +102,10 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 42);
+        }
+
         if (isMyServiceRunning(MyService::class.java)) {
             doBindService()
         }
@@ -108,6 +119,16 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>,
+                                            grantResults: IntArray) {
+        if (grantResults.isNotEmpty()) {
+            if (grantResults[0] == PERMISSION_GRANTED) {
+                // whatever
+            }
+        }
+    }
+
 
     override fun onPause() {
         timer.cancel()
@@ -128,11 +149,14 @@ class MainActivity : AppCompatActivity() {
                 else {
                     _unloadLabel.visibility = INVISIBLE
                 }
+
+                _speedLabel.text = (mBoundService!!.lastSpeedFound * 3.6).toString()
             }
         }
         else {
             _mainButton.text = "Начать поездку"
             _unloadLabel.visibility = INVISIBLE
+            _speedLabel.text = ""
         }
     }
 

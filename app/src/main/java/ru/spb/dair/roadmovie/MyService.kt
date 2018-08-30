@@ -11,6 +11,7 @@ import android.app.PendingIntent
 import android.support.v4.app.NotificationManagerCompat
 import android.app.NotificationManager
 import android.app.NotificationChannel
+import android.content.pm.PackageManager
 import android.location.Criteria.ACCURACY_HIGH
 import android.location.LocationManager.GPS_PROVIDER
 import android.media.RingtoneManager
@@ -18,8 +19,7 @@ import android.os.*
 import android.support.v4.app.NotificationCompat.CATEGORY_ALARM
 import ru.spb.dair.roadmovie.MyService.LocalBinder
 import android.os.IBinder
-
-
+import android.support.v4.content.ContextCompat
 
 
 class MyService : Service(), LocationListener {
@@ -32,6 +32,7 @@ class MyService : Service(), LocationListener {
     var _totalTimePassed: Long = 0
     public var userNotified = false
     var _notificationId: Int = 0
+    var lastSpeedFound: Float = 0.0f
 
     inner class LocalBinder : Binder() {
         internal val service: MyService
@@ -51,9 +52,15 @@ class MyService : Service(), LocationListener {
 
         createNotificationChannel()
 
+        if ( Build.VERSION.SDK_INT >= 23 &&
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED) {
+            return START_STICKY
+        }
+
+
         _locationManager = this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         if (_locationManager != null) {
-            _locationManager.requestLocationUpdates(GPS_PROVIDER, 1000, 0.0, this)
+            _locationManager!!.requestLocationUpdates(GPS_PROVIDER, 1000, 1f, this)
         }
 
 //        Handler().postDelayed({
@@ -65,7 +72,11 @@ class MyService : Service(), LocationListener {
 
     override fun onLocationChanged(location: Location) {
         // Called when a new location is found by the network location provider.
+        if (!location.hasSpeed()) {
+            lastSpeedFound = 0.0f
+        }
 
+        lastSpeedFound = location.speed
         if (location.speed < MIN_SPEED) {
             return
         }
