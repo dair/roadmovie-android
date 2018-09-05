@@ -28,6 +28,7 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
     lateinit var _mainButton: Button
     lateinit var _unloadLabel: TextView
     lateinit var _speedLabel: TextView
+    lateinit var _timePassed: TextView
 
     private var mBoundService: MyService? = null
     private var mShouldUnbind: Boolean = false
@@ -87,6 +88,9 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
 
         _speedLabel = this.findViewById(R.id.lastSpeed)
         _speedLabel.text = ""
+
+        _timePassed = this.findViewById(R.id.timePassed)
+        _timePassed.text = ""
     }
 
     private fun isMyServiceRunning(serviceClass: Class<*>): Boolean {
@@ -151,12 +155,19 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
                 }
 
                 _speedLabel.text = (mBoundService!!.lastSpeedFound * 3.6).toString()
+
+                var secPassed = mBoundService!!._totalTimePassed / 1000
+                val minPassed = secPassed / 60
+                secPassed = secPassed % 60
+
+                _timePassed.text = String.format("%02d:%02d", minPassed, secPassed)
             }
         }
         else {
             _mainButton.text = "Начать поездку"
             _unloadLabel.visibility = INVISIBLE
             _speedLabel.text = ""
+            _timePassed.text = ""
         }
     }
 

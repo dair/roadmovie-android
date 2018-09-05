@@ -25,7 +25,7 @@ import android.support.v4.content.ContextCompat
 class MyService : Service(), LocationListener {
 
     val MIN_SPEED = 20 / 3.6
-    val MAX_TIME = 10 * 60 * 1000
+    val MAX_TIME = 60 * 60 * 1000
 
     var _locationManager: LocationManager? = null
     var _lastLocationTime: Long = 0
@@ -75,8 +75,10 @@ class MyService : Service(), LocationListener {
         if (!location.hasSpeed()) {
             lastSpeedFound = 0.0f
         }
+        else {
+            lastSpeedFound = location.speed
+        }
 
-        lastSpeedFound = location.speed
         if (location.speed < MIN_SPEED) {
             return
         }
@@ -88,6 +90,7 @@ class MyService : Service(), LocationListener {
         }
         else {
             val delta = location.time - _lastLocationTime
+            _lastLocationTime = location.time
             _totalTimePassed += delta
 
             if (!userNotified && _totalTimePassed > MAX_TIME) {
